@@ -1,23 +1,20 @@
 import express from "express"
+
 import agent from "./agent.js"
 import { listServices } from "./persistence/services.js"
-import dotenv from "dotenv";
-
-dotenv.config();
 
 const app = express()
 app.use(express.json())
-const port = process.env.PORT || 3000
+const port = process.env.PORT ?? 3000
 
-app.get("/", (req, res) => {
+app.post("/", async (req, res) => {
   try {
     const requirement = req.body.requirement
-    agent.invoke(requirement).then((response) => {
-      console.log("Agent response:", response)
-      return res.json({ response })
-    })
+    const response = await agent.invoke(requirement)
+    res.json({ response: response.lastMessage })
   } catch (error) {
-    res.status(500).json({ error })
+    const message = error instanceof Error ? error.message : "Agent invocation failed"
+    res.status(500).json({ error: message })
   }
 })
 
@@ -34,15 +31,19 @@ app.get("/integrations", async (req, res) => {
 app.post("/", async (req, res) => {
   try {
     const body = req.body
-    agent.invoke(`Integrate the following service into the agent: ${JSON.stringify(body)}`).then((response) => {
-      console.log("Agent response:", response)
-    })
+    await agent.invoke(`Integrate the following service into the agent: ${JSON.stringify(body)}`)
     res.json({ message: "Integration added successfully" })
   } catch (error) {
-    res.status(500).json({ error })
+    const message = error instanceof Error ? error.message : "Integration failed"
+    res.status(500).json({ error: message })
   }
 })
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+const server = process.env.NODE_ENV === "test"
+  ? undefined
+  : app.listen(port, () => {
+      console.log(`Example app listening on port ${port}`)
+    })
+
+export { app, server }
+export default app

@@ -1,5 +1,5 @@
 import { mkdirSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { dirname, join, resolve } from "node:path"
 
 import { Low } from "lowdb"
 import { JSONFile } from "lowdb/node"
@@ -20,7 +20,9 @@ interface ServicesDatabase {
   services: Array<IntegratedService>
 }
 
-const file = join(process.cwd(), "data", "services.json")
+const file = process.env.SERVICES_DB_PATH
+  ? resolve(process.env.SERVICES_DB_PATH)
+  : join(process.cwd(), "data", "services.json")
 mkdirSync(dirname(file), { recursive: true })
 
 const adapter = new JSONFile<ServicesDatabase>(file)
