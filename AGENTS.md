@@ -13,6 +13,8 @@
 - `src/tools/fetch.ts` declares the `integrateToolToAgent` and `fetchTool` utilities and delegates persistence to the LowDB helpers.
 - `src/persistence/services.ts` stores integrated services via LowDB in `data/services.json` and exposes helper CRUD utilities.
 - `src/types/integration.ts` centralizes the shared `Endpoint` and `IntegratedService` type definitions.
+- `data/` holds the LowDB JSON store; delete `data/services.json` to reset the catalog between runs.
+- `README.md` provides a human-facing overview plus local deployment walkthrough.
 - `dist/` holds TypeScript transpilation artifacts; treat it as disposable output.
 - `tsconfig.json` extends the Node 24 baseline and enables `allowImportingTsExtensions` for ESM interop.
 - `.env` carries local secret material; never commit its contents.
@@ -30,6 +32,7 @@
 - Install dependencies once per checkout: `npm install`.
 - Copy `.env` template from secrets manager; populate `OPENAI_API_KEY` and `GEMINI_API_KEY` manually.
 - Avoid committing `.env`; rely on `.gitignore` guard already present.
+- `data/` is generated automatically; stop the server before deleting `data/services.json` to reset integrations.
 
 ## Command Cheatsheet
 - Start watcher-driven dev server:
@@ -47,6 +50,10 @@ npx tsc --noEmit
 - Produce transpiled output into `dist/` for tooling that requires JS:
 ```bash
 npx tsc
+```
+- Run the compiled server once you have emitted JS:
+```bash
+node dist/src/index.js
 ```
 
 ## Testing Approach
@@ -111,6 +118,12 @@ npx tsx --test --test-name "integrates new service"
 - Keep tool descriptions concise yet explicit; agents rely on them for planning.
 - Use `zod` refinements to validate endpoint URLs and HTTP methods beyond the basic enum where necessary.
 - Consider idempotent callbacks wherever practical to make retries safe.
+
+## Local Deployment
+- Build when you need JavaScript artifacts: `npx tsc` emits files under `dist/`.
+- Launch the compiled server with `node dist/src/index.js`; ensure `.env` is present before boot.
+- Verify health by calling `GET /integrations`; it should return the LowDB-backed catalog.
+- Mount `data/` to durable storage when packaging (Docker, PM2, etc.) so integrations persist across restarts.
 
 ## State & Data Flow
 - The LowDB-backed store (`src/persistence/services.ts`) is the single source of truth; use the exported helper functions instead of mutating data directly.
