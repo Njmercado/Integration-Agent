@@ -28,13 +28,13 @@ Refer to `AGENTS.md` for deeper operational guidance tailored to autonomous agen
    ```bash
    npm install
    ```
-2. Create `.env` in the project root (see `.env example` below) and populate `OPENAI_API_KEY`, `GEMINI_API_KEY`, and `PORT` if you need a non-default value.
+2. Create `.env` in the project root (see `.env example` below) and populate `MODEL_API_KEY`, `MODEL`, and `PORT` if you need a non-default value.
 3. Ensure `data/` directory remains gitignored; it will be created on demand by LowDB.
 
 ### `.env` example
 ```
-OPENAI_API_KEY=sk-xxx
-GEMINI_API_KEY=ya29.xxx
+MODEL_API_KEY=sk-xxx
+MODEL=ya29.xxx
 PORT=3000
 ```
 
