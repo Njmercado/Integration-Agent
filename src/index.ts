@@ -2,19 +2,31 @@ import express from "express"
 
 import agent from "./agent.js"
 import { listServices } from "./persistence/services.js"
+import { getToolAnswerFromAgentMessages } from "./utils/agent.util.js"
 
 const app = express()
 app.use(express.json())
 const port = process.env.PORT ?? 3000
+const MAX_RETRIES = 3
 
 app.post("/", async (req, res) => {
-  try {
-    const requirement = req.body.requirement
-    const response = await agent.invoke(requirement)
-    res.json({ response: response.lastMessage })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Agent invocation failed"
-    res.status(500).json({ error: message })
+  for (let i = 0; i < MAX_RETRIES; i++) {
+    try {
+      const requirement = req.body.requirement
+      await agent.invoke(requirement)
+
+      const toolAnswer = getToolAnswerFromAgentMessages(agent.messages)
+      res.json({ response: toolAnswer })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Agent invocation failed"
+
+      if ( i < MAX_RETRIES) {
+        console.warn(`Attempt ${i + 1} failed: ${message}. Retrying...`)
+        continue
+      }
+
+      res.status(500).json({ error: message })
+    }
   }
 })
 
@@ -28,7 +40,7 @@ app.get("/integrations", async (req, res) => {
   }
 })
 
-app.post("/", async (req, res) => {
+app.post("/integration", async (req, res) => {
   try {
     const body = req.body
     await agent.invoke(`Integrate the following service into the agent: ${JSON.stringify(body)}`)
@@ -42,8 +54,8 @@ app.post("/", async (req, res) => {
 const server = process.env.NODE_ENV === "test"
   ? undefined
   : app.listen(port, () => {
-      console.log(`Example app listening on port ${port}`)
-    })
+    console.log(`Example app listening on port ${port}`)
+  })
 
 export { app, server }
 export default app

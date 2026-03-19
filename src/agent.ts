@@ -50,10 +50,8 @@ const agent = new Agent({
       4. Never invent service definitions, URLs, or endpoints.
 
     Fetch rules:
-      1. Call fetchTool only with values that exactly match an integrated service and endpoint from listIntegrationsTool.
       2. Service name and endpoint path must match exactly.
       3. Method must be one of the allowed methods and must match the intended endpoint usage.
-      4. If no exact match exists, do not call fetchTool. Explain what is missing and request integration data.
       5. If multiple calls are needed, perform them sequentially and summarize each result.
 
     Anti-hallucination constraints:

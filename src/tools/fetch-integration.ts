@@ -1,8 +1,7 @@
 import { tool } from "@strands-agents/sdk"
 import { z } from "zod"
 import { findServiceByName } from "../persistence/services.js"
-
-const MAX_RETRIES = 3
+import { isJsonValue } from "../utils/tools.util.js"
 
 export const fetchTool = tool({
   name: "fetchTool",
@@ -46,21 +45,25 @@ export const fetchTool = tool({
       throw new Error(`Endpoint ${endpoint} not found for service ${service}`)
     }
 
-    for(let i = 0; i < MAX_RETRIES; i++) {
-      const result = await fetch(foundService.url + foundEndpoint.endpoint, { method })
-      const data = await result.json()
-      if (result.ok) {
-        console.log(`Successfully called ${service} at ${endpoint} with method ${method}. Response:`, data)
-        return JSON.stringify({
-          source: service,
-          data: data,
-          normalized_at: new Date().toISOString()
-        });
-      } else {
-        console.error(`Failed to call ${service} at ${endpoint} with method ${method}. Attempt ${i + 1} of ${MAX_RETRIES}`)
+    const result = await fetch(foundService.url + foundEndpoint.endpoint, { method })
+    const data = await result.json()
+    if (result.ok) {
+
+      console.log(`Successfully called ${service} at ${endpoint} with method ${method}. Response: ${JSON.stringify(data)}`)
+
+      if (!isJsonValue(data)) {
+        console.error(`Response data from ${service} at ${endpoint} is not a valid JSON value.`)
+        throw new Error(`Response data from ${service} at ${endpoint} is not a valid JSON value.`)
       }
+
+      return {
+        source: service,
+        data: data,
+        normalized_at: new Date().toISOString()
+      };
     }
 
-    return "Failed to call the service after multiple attempts. Please check the service status and try again later."
+    console.error(`Failed to call ${service} at ${endpoint} with method ${method}.`)
+    throw new Error(`Failed to call ${service} at ${endpoint} with method ${method}.`)
   },
 })
